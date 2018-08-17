@@ -6,25 +6,34 @@ import (
 	"time"
 )
 
+type Coordinate struct {
+	x int
+	y int
+}
+
 type Block struct {
-	Index     int
-	Timestamp string
-	BPM       int
-	Hash      string
-	PrevHash  string
+	Index          int
+	Timestamp      string
+	MoveCoordinate Coordinate
+	Hash           string
+	PrevHash       string
 }
 
 var Blockchain []Block
 
 func calculateHash(block Block) string {
-	record := string(block.Index) + block.Timestamp + string(block.BPM) + block.PrevHash
+	record := string(block.Index) +
+		block.Timestamp +
+		string(block.MoveCoordinate.x) +
+		string(block.MoveCoordinate.y) +
+		block.PrevHash
 	h := sha256.New()
 	h.Write([]byte(record))
 	hashed := h.Sum(nil)
 	return hex.EncodeToString(hashed)
 }
 
-func generateBlock(oldBlock Block, BPM int) (Block, error) {
+func generateBlock(oldBlock Block, moveCoordinate Coordinate) (Block, error) {
 
 	var newBlock Block
 
@@ -32,7 +41,7 @@ func generateBlock(oldBlock Block, BPM int) (Block, error) {
 
 	newBlock.Index = oldBlock.Index + 1
 	newBlock.Timestamp = t.String()
-	newBlock.BPM = BPM
+	newBlock.MoveCoordinate = moveCoordinate
 	newBlock.PrevHash = oldBlock.Hash
 	newBlock.Hash = calculateHash(newBlock)
 
