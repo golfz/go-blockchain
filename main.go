@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,8 +17,8 @@ import (
 )
 
 type Coordinate struct {
-	x int
-	y int
+	X int
+	Y int
 }
 
 type Block struct {
@@ -29,8 +30,8 @@ type Block struct {
 }
 
 type Message struct {
-	x int
-	y int
+	X int
+	Y int
 }
 
 var Blockchain []Block
@@ -38,8 +39,8 @@ var Blockchain []Block
 func calculateHash(block Block) string {
 	record := string(block.Index) +
 		block.Timestamp +
-		string(block.MoveCoordinate.x) +
-		string(block.MoveCoordinate.y) +
+		string(block.MoveCoordinate.X) +
+		string(block.MoveCoordinate.Y) +
 		block.PrevHash
 	h := sha256.New()
 	h.Write([]byte(record))
@@ -129,7 +130,9 @@ func handleWriteBlock(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	newBlock, err := generateBlock(Blockchain[len(Blockchain)-1], m.BPM)
+	coordinate := Coordinate{X: m.X, Y: m.Y}
+
+	newBlock, err := generateBlock(Blockchain[len(Blockchain)-1], coordinate)
 	if err != nil {
 		respondWithJSON(w, r, http.StatusInternalServerError, m)
 		return
@@ -163,7 +166,10 @@ func main() {
 
 	go func() {
 		t := time.Now()
-		genesisBlock := Block{0, t.String(), 0, "", ""}
+		coordinate := Coordinate{X: 0, Y: 0}
+		fmt.Println(coordinate)
+		genesisBlock := Block{0, t.String(), coordinate, "", ""}
+		genesisBlock.Hash = calculateHash(genesisBlock)
 		spew.Dump(genesisBlock)
 		Blockchain = append(Blockchain, genesisBlock)
 	}()
